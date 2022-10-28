@@ -3,6 +3,9 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.base_user import BaseUserManager
+import jwt
+from datetime import datetime, timedelta
+from django.conf import settings
 
 
 class CustomUserManager(BaseUserManager):
@@ -54,6 +57,15 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    @property
+    def token(self):
+        token = jwt.encode({"full_name": self.full_name(), "email": self.email,
+                            "exp": datetime.utcnow() + timedelta(hours=1)}, settings.SECRET_KEY, algorithm="HS256")
+        return token
 
 
 class Role(models.Model):
